@@ -1,0 +1,50 @@
+{
+  "current_index": 0,
+  "exhausted": [
+    8
+  ],
+  "last_reset": "2026-09-14T11:55:58.708723+00:00",
+  "session_start": "2026-09-14T11:55:58.708723+00:00",
+  "gateway_primary": "openrouter",
+  "gateway_model": "cohere/north-mini-code:free",
+  "fallback_providers": [
+    {
+      "provider": "openrouter",
+      "model": "nex-agi/nex-n2.5-mini:free"
+    },
+    {
+      "provider": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free"
+    },
+    {
+      "provider": "openrouter",
+      "model": "dots-studio/dots-3-note-preview:free"
+    },
+    {
+      "provider": "openrouter",
+      "model": "inclusionai/ling-3.0-flash-fin:free"
+    },
+    {
+      "provider": "openrouter",
+      "model": "inclusionai/ling-3.0-flash-vl:free"
+    },
+    {
+      "provider": "openrouter",
+      "model": "inclusionai/ling-3.0-flash-sante:free"
+    },
+    {
+      "provider": "nvidia",
+      "model": "nvidia/nemotron-3-super-120b-a12b"
+    },
+    {
+      "provider": "zai",
+      "model": "glm-4.5-flash"
+    },
+    {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  ],
+  "last_updated": "2026-09-14T11:55:58.708723+00:00",
+  "policy": "free-first with paid fallback (deepseek last); index 8 openrouter/free router marked exhausted (can misroute to nvidia/nemotron-3.5-content-safety classifier)"
+}
