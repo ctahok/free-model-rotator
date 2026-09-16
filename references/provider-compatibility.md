@@ -13,8 +13,9 @@ Only these provider names work with `hermes auth add <name> --api-key <key>`:
 | `copilot`   | ✅ Yes                   | GitHub Copilot |
 
 **NOT supported** (returns "Unknown provider"):
-`cerebras`, `groq`, `mistral`, `openai`, `google`, `anthropic`,
+`cerebras`, `mistral`, `openai`, `google`, `anthropic`,
 `gemini_pro`, `ollama`
+However, Groq provides an OpenAI-compatible API at https://api.groq.com/openai/v1 and can be configured as a custom provider in config.yaml.
 
 ## `hermes fallback add` — Supported Providers
 
