@@ -1,11 +1,17 @@
-# Free Model Rotator Skill
+---
+name: free-model-rotator
+description: Rotate free LLM API providers; fall back to paid on exhaustion. 21 free tiers + 1 paid fallback.
+version: 3.2.0
+author: You
+platforms: [linux]
+---
 
-**Modernized Multi-Key Rotation System with Enhanced Configuration**
+# FMR Skill
 
 Automatically cycle through free-tier OpenAI-compatible API providers,
-with intelligent multi-key management, automatic key retirement, and
-enhanced quota monitoring. Supports both single-key and multi-key
-provider configurations with sophisticated failure detection and recovery.
+switching to the next one when a token/rate limit error is detected, and
+falling back to the configured paid provider only when all free tiers are
+exhausted or unavailable.
 
 ## When to Use
 
@@ -32,7 +38,10 @@ Only providers registered with `hermes auth add <provider> --api-key <key>` will
 - `xiaomi` — Xiaomi/MiMo API
 - `copilot` — GitHub Copilot
 
-**NOT supported** (will get "Unknown provider" error): `cerebras`, `groq`, `mistral`, `openai`, `google`, `gemini_pro`
+**Multiple keys for one provider are a credential pool, not separate rotator indexes.** `current_index` selects a provider/model slot; Hermes credential priority selects which API key is tried for that provider. Never put two real keys in one `api_key` YAML field, because that field is scalar. Register each key separately under the native provider ID (for Google, `gemini`), then set the provider strategy to `fill_first` so priority 0 is used until exhaustion and priority 1 is used next. Use the installed CLI's documented priority/label options, add sequentially if needed, and verify with `hermes auth list <provider>` and `hermes auth strategy <provider>`. For a single-key YAML configuration, use `key_env` rather than embedding a secret. See `references/google-gemini-credentials.md`.
+
+**NOT supported** (will get "Unknown provider" error): `cerebras`, `mistral`, `openai`, `google`, `gemini_pro`
+However, Groq provides an OpenAI-compatible API at https://api.groq.com/openai/v1 and can be configured as a custom provider in config.yaml.
 
 Add credentials:
 ```bash
@@ -48,7 +57,7 @@ hermes config show   # Shows the active provider
 hermes fallback list # Shows the fallback chain
 ```
 
-**Important**: For consistent model rotation across all Hermes instances (CLI, gateway, services), ensure they all use the same `HERMES_HOME`. The free model rotator state is stored in `$HERMES_HOME/skills/free-model-rotator/state.json`. If your Telegram bot or other services use a different `HERMES_HOME` (e.g. running as root), they will maintain separate rotation state and may use different models.
+**Important**: For consistent model rotation across all Hermes instances (CLI, gateway, services), ensure they all use the same `HERMES_HOME`. The free model rotator state is stored in `$HERMES_HOME/skills/free-model-rotator/state.json`. If your Telegram bot or other services use a different HERMES_HOME (e.g. running as root), they will maintain separate rotation state and may use different models.
 
 To verify consistency between your CLI and system services:
 1. Check your user configuration: `hermes config show`
@@ -64,7 +73,7 @@ hermes auth list
 # Look for: "auth failed (401) (re-auth may be required)"
 ```
 
-Treat `auth failed (401)` credentials as **exhausted immediately** — they won't self-resolve within the session. Only the daily reset should re-test them.
+Treat `auth failed (401)` credentials as **exhausted immediately** — they won't self-resolve within the session. Only an explicit recovery or manual reset should re-test them.
 
 **Credential Recovery Procedure:**
 When `auth failed (401)` is detected for a provider:
@@ -98,29 +107,6 @@ When `auth failed (401)` is detected for a provider:
 - Z.AI (GLM) → typically working
 - Azure OpenAI → custom, independent
 
-**Credential Recovery Procedure:**
-When `auth failed (401)` is detected for a provider:
-1. Remove the bad credential: `hermes auth remove <provider> <credential-id>`
-   (Find credential-id from `hermes auth list` output)
-2. Verify remaining credentials: `hermes auth list` (ensure no `auth failed` for needed providers)
-3. If all credentials for a provider are removed, re-add a valid key:
-   `hermes auth add <provider> --api-key "<valid-key>"`
-4. Reset free-model-rotator state to retry from index 0:
-   ```
-   {
-     "current_index": 0,
-     "exhausted": [],
-     "last_reset": "$(date -u +%Y-%m-%dT%H:%M:%S.%6Z)",
-     "session_start": "$(date -u +%Y-%m-%dT%H:%M:%S.%6Z)"
-   }
-   ```
-   Write to `$HERMES_HOME/skills/free-model-rotator/state.json`
-5. Optionally lock to a known-working provider to bypass rotator during recovery:
-   `hermes config set model.provider <working-provider>`
-   `hermes config set model.default <working-model>`
-   (Then restart gateway: `systemctl --user restart hermes-gateway.service`)
-6. Verify configuration: `hermes config show`
-
 ## Free Provider Pool (Priority Order — measured against OpenRouter, 2026-09-13)
 
 > **Read `references/measured-speed-ranking.md` before rotating.** The table below has
@@ -144,32 +130,33 @@ When `auth failed (401)` is detected for a provider:
 
 | Index | Provider | Free | Model | Measured |
 |-------|----------|------|-------|----------|
-| 0 | OpenRouter | ✅ | cohere/north-mini-code:free | 0.31s TTFT / 194 t/s |
-| 1 | OpenRouter | ✅ | dots-studio/dots-3-note-preview:free | 0.71s TTFT / 65 t/s |
-| 2 | OpenRouter | ✅ | nvidia/nemotron-3-super-120b-a12b:free | 1.02s TTFT / 46 t/s (best large model) |
-| 3 | OpenRouter | ✅ | inclusionai/ling-3.0-flash-vl:free | 0.91s TTFT / 157 t/s (multimodal) |
-| 4 | OpenRouter | ✅ | inclusionai/ling-3.0-flash-fin:free | 1.27s TTFT / 452 t/s |
-| 5 | OpenRouter | ✅ | inclusionai/ling-3.0-flash-sante:free | 1.09s TTFT / 296 t/s |
-| 6 | OpenRouter | ✅ | nex-agi/nex-n2.5-mini:free | 0.94s TTFT |
-| 7 | OpenRouter | ✅ | liquid/lfm-2.5-2.6b:free | 0.85s TTFT / 425 t/s (2.6B — low capability) |
-| 8 | OpenRouter | ✅ | openrouter/free | 3.0s median real, 780 logged calls |
-| 9 | OpenRouter | ✅ | poolside/laguna-xs-2.1:free | 0.23s but 50% 429 |
-| 10 | OpenRouter | ✅ | poolside/laguna-s-2.1:free | 0.62s but 50% 429 |
-| 11 | OpenRouter | ✅ | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free | 0.50s but 50% 502 |
-| 12 | OpenRouter | ✅ | nex-agi/nex-n2.5-pro:free | 20-50s TTFT |
-| 13 | OpenRouter | ✅ | nvidia/nemotron-3.5-lightning:free | 30-97s TTFT / 3.7 t/s |
-| 14 | OpenRouter | ✅ | nvidia/nemotron-3-ultra-550b-a55b:free | 55-91s TTFT / 67 t/s |
-| 15 | DeepSeek | ✅ | deepseek-chat / deepseek-flash | 2.60s median real, 115 t/s |
-| 16 | zai | ✅ | glm-5.2:free | typically fast |
-| 17 | Gemini | ✅ | gemini-1.5-flash | typically fast (both keys 429-exhausted as of 2026-09-13) |
-| 18 | Xiaomi | ✅ | mimo-2.5-pro | paid fallback |
-| 19 | Copilot | ✅ | gpt-4o-mini | if available |
-| 20 | PAID | via custom config | (your paid model) | unlimited (billed) |
+| 0        | OpenRouter      | ✅ yes             | cohere/north-mini-code:free                        | 0.31s TTFT / 194 t/s |
+| 1        | OpenRouter      | ✅ yes             | dots-studio/dots-3-note-preview:free               | 0.71s TTFT / 65 t/s |
+| 2        | OpenRouter      | ✅ yes             | nvidia/nemotron-3-super-120b-a12b:free             | 1.02s TTFT / 46 t/s (best large model) |
+| 3        | OpenRouter      | ✅ yes             | inclusionai/ling-3.0-flash-vl:free                 | 0.91s TTFT / 157 t/s (multimodal) |
+| 4        | OpenRouter      | ✅ yes             | inclusionai/ling-3.0-flash-fin:free                | 1.27s TTFT / 452 t/s |
+| 5        | OpenRouter      | ✅ yes             | inclusionai/ling-3.0-flash-sante:free              | 1.09s TTFT / 296 t/s |
+| 6        | OpenRouter      | ✅ yes             | nex-agi/nex-n2.5-mini:free                         | 0.94s TTFT |
+| 7        | OpenRouter      | ✅ yes             | liquid/lfm-2.5-2.6b:free                           | 0.85s TTFT / 425 t/s (2.6B — low capability) |
+| 8        | OpenRouter      | ✅ yes             | openrouter/free                                    | 3.0s median real, 780 logged calls |
+| 9        | OpenRouter      | ✅ yes             | poolside/laguna-xs-2.1:free                        | 0.23s but 50% 429 |
+| 10       | OpenRouter      | ✅ yes             | poolside/laguna-s-2.1:free                         | 0.62s but 50% 429 |
+| 11       | OpenRouter      | ✅ yes             | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free | 0.50s but 50% 502 |
+| 12       | OpenRouter      | ✅ yes             | nex-agi/nex-n2.5-pro:free                          | 20-50s TTFT |
+| 13       | OpenRouter      | ✅ yes             | nvidia/nemotron-3.5-lightning:free                 | 30-97s TTFT / 3.7 t/s |
+| 14       | OpenRouter      | ✅ yes             | nvidia/nemotron-3-ultra-550b-a55b:free             | 55-91s TTFT / 67 t/s |
+| 15       | DeepSeek        | ✅ yes             | deepseek-chat / deepseek-flash                     | 2.60s median real, 115 t/s |
+| 16       | zai             | ✅ yes             | glm-5.2:free                                       | typically fast |
+| 17       | Gemini          | ✅ yes             | gemini-1.5-flash                                   | typically fast (both keys 429-exhausted as of 2026-09-13) |
+| 18       | Xiaomi          | ✅ yes             | mimo-2.5-pro                                       | paid fallback |
+| 19       | Copilot         | ✅ yes             | gpt-4o-mini                                        | if available |
+| 20       | PAID            | via custom config  | (your paid model)                                  | unlimited (billed) |
 
 **Never rotate to** (present on the free tier but unusable):
 `thinkingmachines/inkling:free`, `thinkingmachines/inkling-small:free` (403),
 `nvidia/nemotron-3.5-content-safety:free` (classifier),
 `google/gemma-4-26b-a4b-it:free`, `google/gemma-4-31b-it:free` (429).
+
 
 ## Custom Providers
 
@@ -195,9 +182,9 @@ model:
 
 **Important**: Custom providers bypass the free model rotator entirely. If you want the rotator to manage paid fallbacks, you must add the paid provider to your fallback chain using `hermes fallback add` instead.
 
-> *Note: To use a paid Xiaomi/MiMo API key, configure it as a custom provider in config.yaml rather than using `hermes auth add`. See the "Custom Providers" section below for details.*
+> *Note: To use a paid Xiaomi/MiMo API key, configure it as a custom provider in config.yaml rather than using `hermes auth add`. See the "Custom Providers" section below for details.
 
-**Providers NOT available** (no `hermes auth add` support, fallback_providers block in config.yaml is ignored by Hermes): Cerebras, Mistral, Ollama (unless configured as a custom provider with proper base_url in `providers:` section). Groq provides an OpenAI-compatible API at `https://api.groq.com/openai/v1` and can be added as a custom provider in config.yaml.
+**Providers NOT available** (no `hermes auth add` support, fallback_providers block in config.yaml is ignored by Hermes): Cerebras, Mistral, Ollama (unless configured as a custom provider with proper base_url in `providers:` section). Groq provides an OpenAI-compatible API at https://api.groq.com/openai/v1 and can be configured as a custom provider in config.yaml.
 
 ## How to Run
 
@@ -309,17 +296,18 @@ If any signal is detected, immediately execute Step 4.
 7. **Retry the last failed request** using the new provider without
    asking the user to repeat their message.
 
-### Step 5 — Daily reset
+### Step 4A — Exhaustion-only Gemini mode
 
-At session start, compare `last_reset` in `state.json` to the current
-UTC date. If they differ by ≥ 24 hours:
+When the user explicitly wants Gemini at rotator index `0` until both keys are exhausted:
 
-1. Clear the `exhausted` list.
-2. Reset `current_index` to 0 (OpenRouter/Nemotron — first free tier).
-3. Update `last_reset` to the current ISO timestamp.
-4. Apply the first provider via Step 2 (update config.yaml + restart gateway).
-5. Write state and log: `"[rotator] Daily reset — free pool restored."`
+1. Register both keys under the native `gemini` provider; do not create `google-primary` and `google-secondary` provider entries.
+2. Set the Gemini credential strategy to `fill_first` and verify priorities with `hermes auth list gemini`.
+3. Set `model.provider: gemini` and the verified default model.
+4. Update only the active state file, `$HERMES_HOME/skills/free-model-rotator/state.json`, with `current_index: 0`, `gateway_primary: gemini`, and `gateway_model: <verified-model>`. Preserve the existing fallback list and shift indexes atomically if a slot is inserted.
+5. Do not install a daily reset for exhaustion-only operation. Reset only after an explicit recovery or manual reset request.
+6. Restart the user gateway and verify the complete chain with `hermes config show`, `hermes auth list gemini`, `hermes fallback list`, and gateway logs.
 
+See `references/google-gemini-credentials.md` for the exact state and verification workflow.
 ### Step 6 — Paid fallback behaviour
 
 When `current_index == 99`:
@@ -356,6 +344,9 @@ The gateway uses Hermes's **built-in fallback provider chain**, NOT the config.y
 ```bash
 # Run in a real terminal (interactive):
 hermes fallback add   # Pick from the list of auth'd providers
+
+# Verify:
+hermes fallback list
 ```
 
 The built-in fallback chain is configured via Hermes's own internal mechanism, not by editing config.yaml. Once set, the gateway automatically retries with the next fallback when the current provider returns auth/rate-limit errors — no agent intervention needed.
@@ -446,15 +437,19 @@ See the loop-engineering skill for detailed resync procedure.
 
 ## Quick Reference
 
-`/rotator status → print state.json contents  `
-`/rotator reset → clear exhausted list, return to index 0  `
-`/rotator skip → mark current provider exhausted, rotate now  `
-`/rotator paid → force switch to paid provider immediately  `
+/rotator status → print state.json contents
+/rotator reset → clear exhausted list, return to index 0
+/rotator skip → mark current provider exhausted, rotate now
+/rotator paid → force switch to paid provider immediately
 
 Handle these as plain-text user commands parsed at the start of your
 response loop; no slash-command registration is needed.
 
 ## State Management
+
+### Active state discovery
+
+Never scan `*.json` under the rotator directory to guess the state file. Resolve `$HERMES_HOME` from the running CLI/service and update `$HERMES_HOME/skills/free-model-rotator/state.json` only. Before any mutation, back up the exact state/config files, validate JSON/Python, and use an atomic rename. If the user wants exhaustion-only behavior, omit the daily reset.
 
 ## HERMES_HOME Consistency
 
@@ -471,7 +466,6 @@ of every OpenRouter `:free` model, real production latency from `agent.log`, and
 current unusable-model list.
 See `references/phi3-removal.md` for the migration that removed the Ollama/phi3 tier.
 See `references/opengateway-removal.md` for the removal of the OpenGateway provider and exact sed commands used.
-See `references/credential-recovery.md` for procedures to recover from `auth failed (401)` credentials.
 See `references/credential-recovery.md` for procedures to recover from `auth failed (401)` credentials.
 
 ## Modifying the Provider Pool
@@ -519,7 +513,7 @@ To remove a provider:
 - **`hermes auth list` can show `auth failed (401)` even for registered credentials.** A credential that exists in the config but has an expired or revoked API key will fail at runtime. Always run `hermes auth list` and check for `auth failed` markers before selecting a provider. If you see `auth failed`, mark that provider as exhausted — it won't self-reset.
 - **Do not prompt the user before rotating.** Rotation must be silent and automatic. Only notify after the fact.
 - **context_length_exceeded is provider-specific, not model-broken.** Rotate to the next provider, do not give up on the task.
-- **Not all provider names work with `hermes auth add`.** Only `gemini`, `deepseek`, `openrouter`, `xiaomi`, and `copilot` are supported. `cerebras`, `groq`, `mistral`, `openai`, `google`, `gemini_pro` all return "Unknown provider" errors. Always run `hermes auth list` first to see what's actually configured before attempting to use a provider.
+- **Not all provider names work with `hermes auth add`.** Only `gemini`, `deepseek`, `openrouter`, `xiaomi`, and `copilot` are supported. `cerebras`, `groq`, `mistral`, `google`, `openai` all return "Unknown provider" errors. Always run `hermes auth list` first to see what's actually configured before attempting to use a provider.
 - **The `fallback_providers:` section in config.yaml is NOT Hermes's built-in fallback system.** The gateway ignores it. Real fallback is configured via `hermes fallback add` (interactive TTY command). The config.yaml section is a custom configuration that Hermes doesn't process natively.
 - **`model.api_key` and `model.base_url` in config.yaml are unnecessary** when using a provider registered via `hermes auth add`. Setting them manually can conflict with the provider's built-in credential resolution. Only set them for custom providers not in the auth system.
 - **`hermes auth add` assigns default base URLs** — When registering Xiaomi (or other providers with non-standard endpoints), verify the stored base URL in `~/.hermes/auth.json` matches the actual API endpoint. Edit the file directly if it doesn't. For example, Xiaomi's `token-plan-sgp` region uses `https://token-plan-sgp.xiaomimimo.com/v1`, not the default `https://api.xiaomimimo.com/v1`.
@@ -540,7 +534,7 @@ To remove a provider:
 
 After loading this skill, run:
 
-`/rotator status`
+/rotator status
 
 Expected output: a JSON block showing `current_index: 0`,
 `exhausted: []`, and a valid `last_reset` timestamp.
@@ -563,28 +557,6 @@ skills:
 - **State is a flat JSON file** — simple for Hermes to read/write with `read_file`/`write_file`, and survives restarts.
 - **Nemotron via OpenRouter as primary free tier** — provides strong coding ability at zero cost.
 - **Gateway restart via systemd** — `systemctl --user restart hermes-gateway.service` is the correct method (not `pkill`, which leaves orphaned processes).
-- **Daily reset** — matches the typical daily quota windows of free API tiers.
-
-## References
-
-For detailed information:
-- **Credential Recovery**: `references/credential-recovery.md`
-- **State Management**: `references/state-management.md`
-- **Measured Speed Rankings**: `references/measured-speed-ranking.md`
-- **Provider Compatibility**: `references/provider-compatibility.md`
-
-## License
-
-This skill is part of the Hermes Agent ecosystem. Use responsibly and respect provider terms of service.
-
-## Support
-
-For issues with the Free Model Rotator:
-1. Check logs: `journalctl --user -u hermes-gateway.service`
-2. Run credential [check] (`python3 ~/.hermes/scripts/credential_health_sweep.py`)
-3. Verify provider credentials: `hermes auth list`
-4. Reset rotator if needed: `hermes skills run free-model-rotator /rotator reset`
-
----
-
-*Last updated: September 14, 2026 - v3.0 (Free-First with Paid Fallback)*
+- **Secrets stay outside config and scripts.** Never place real API keys in `config.yaml`, repository files, chat, logs, backups, or command history. Use the local interactive prompt or a local secret manager, and unset shell variables after registration.
+- **Exhaustion-first, reset-on-demand.** When the user requests index `0` until exhaustion, do not reset `current_index` on a schedule. Reset only after an explicit recovery or manual reset request.
+- **Daily reset is opt-in.** It is appropriate only for a quota-window mode explicitly requested by the user; it is not the default for exhaustion-based operation.

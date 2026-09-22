@@ -1,4 +1,4 @@
-# Xiaomi/MiMo Model Setup for Free Model Rotator
+# Xiaomi/MiMo Model Setup for FMR
 
 ## Credential Setup (Done)
 

@@ -1,10 +1,16 @@
-# Free Model Rotator - Modern Multi-Key Rotation System
+# FMR - Modern Multi-Key Rotation System
 
 ## Overview
 
-The Free Model Rotator is an advanced Hermes skill that provides intelligent model rotation with multi-key support, automatic key retirement, and enhanced quota monitoring. This system goes beyond basic provider rotation to offer sophisticated credential management, performance optimization, and comprehensive discovery capabilities.
+FMR is an advanced Hermes skill that provides intelligent model rotation with multi-key support, automatic key retirement, and enhanced quota monitoring. This system goes beyond basic provider rotation to offer sophisticated credential management, performance optimization, and comprehensive discovery capabilities.
 
-**Version**: 3.1.0 (Free-First with Paid Fallback Strategy)
+**Version**: 3.2.0 (FMR branding and documentation update)
+
+## What's new in 3.2.0
+- Standardised the user-facing name as **FMR**.
+- Synchronised the repository skill with the latest FMR provider, credential-recovery, and state-management guidance.
+- Corrected command examples and clarified the `hermes fallback` versus `config.yaml` distinction.
+- Added the multi-key Gemini credential-recovery reference.
 
 ## Key Features
 
@@ -80,7 +86,7 @@ The Free Model Rotator is an advanced Hermes skill that provides intelligent mod
 #### Status and Monitoring
 ```bash
 # View current rotation status
-hermes skills run free-model-rotcome /rotator status
+hermes skills run free-model-rotator /rotator status
 
 # Check provider configuration
 hermes config show
@@ -181,7 +187,7 @@ hermes skills run free-model-rotator /report generate
 ## Configuration Options
 
 ### config.json
-The main configuration file for the Free Model Rotator skill.
+The main configuration file for the FMR skill.
 
 **Providers Section**:
 ```json
@@ -283,7 +289,7 @@ hermes skills run free-model-rotator /usage report
 #### /quota status
 Check quota status:
 ```bash
-hermens skills run free-model-rotator /quota status
+hermes skills run free-model-rotator /quota status
 ```
 
 #### /report generate
@@ -376,7 +382,7 @@ Smart rotation strategies:
 ```json
 {
   "$schema": "https://hermes-agent.nousresearch.com/schemas/free-model-rotator.json",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "providers": {
     "provider_name": {
       "keys": ["key1", "key2"],
@@ -419,7 +425,7 @@ This project is part of the Hermes Agent ecosystem. Use responsibly and respect 
 
 ## Support
 
-For issues with the Free Model Rotator:
+For issues with FMR:
 1. Check logs: `journalctl --user -u hermes-gateway.service`
 2. Run credential health sweep: `hermes skills run free-model-rotator /usage report`
 3. Verify provider credentials: `hermes auth list`
@@ -427,4 +433,4 @@ For issues with the Free Model Rotator:
 
 ---
 
-*Last updated: September 16, 2026 - v3.1.0 (Free-First with Paid Fallback)*
+*Last updated: September 20, 2026 - v3.2.0 (FMR branding and documentation update)*

@@ -1,10 +1,10 @@
-# Free Model Rotator Reference Documentation
+# FMR Reference Documentation
 
-This documentation provides comprehensive information about the Free Model Rotator skill's architecture, configuration, and troubleshooting procedures.
+This documentation provides comprehensive information about the FMR skill's architecture, configuration, and troubleshooting procedures.
 
 ## Overview
 
-The Free Model Rotator is an intelligent model rotation system designed to automatically cycle through free-tier LLM API providers, with sophisticated multi-key support, automatic key retirement, and enhanced quota monitoring.
+The FMR is an intelligent model rotation system designed to automatically cycle through free-tier LLM API providers, with sophisticated multi-key support, automatic key retirement, and enhanced quota monitoring.
 
 ## Key Features
 
@@ -35,7 +35,7 @@ The Free Model Rotator is an intelligent model rotation system designed to autom
 ## Configuration Files
 
 ### config.json
-The main configuration file for the Free Model Rotator skill.
+The main configuration file for the FMR skill.
 
 ```json
 {

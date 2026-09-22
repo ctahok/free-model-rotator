@@ -1,4 +1,4 @@
-# Free Model Rotator State Management
+# FMR State Management
 
 The free model rotator persists its state in `~/.hermes/skills/free-model-rotator/state.json`. This file contains:
 
