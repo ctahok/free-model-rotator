@@ -29,7 +29,7 @@ The provider is included in the rotator's fallback_providers in state.json:
 To test directly:
 ```bash
 curl -X POST "https://token-plan-sgp.xiaomimimo.com/v1/chat/completions" \
-  -H "Authorization: Bearer tp-sbt1b80c43zy5vgxptlbtbaz31lhnnm56jj2hxujnwflt998" \
+  -H "Authorization: Bearer tp-sbt1b80c43zasdasdasd" \
   -H "Content-Type: application/json" \
   -d '{"model":"mimo-2.5-pro","messages":[{"role":"user","content":"hello"}]}'
 ```
