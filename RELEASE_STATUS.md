@@ -36,7 +36,7 @@ Prepared: 2026-09-22
 
 - Verify the live gateway's active provider/model and run a non-mutating `/rotator status` or equivalent health check.
 - Run an end-to-end rotation test if credentials and network access permit.
-- Fix the separate `MyBlinkist Daily` cron formatting error in `/home/iliko/.hermes/config.yaml` (job `73cad669d206`).
+- Fix any cron job formatting errors in `~/.hermes/config.yaml`.
 - Resolve GitHub CLI authentication (`gh auth status` currently reports an invalid token).
 - After those gates pass: commit, push `main`, create/push tag `v3.2.0`, and publish the GitHub release.
 

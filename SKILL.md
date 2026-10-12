@@ -243,9 +243,10 @@ The `current_index` maps to the working provider table above. Any index in `exha
 To switch the active provider for the current CLI session:
 
 ```bash
-sed -i 's/^  provider: .*/  provider: <provider-name>/' ~/.hermes/config.yaml
-sed -i 's/^  default: .*/  default: <model-name>/' ~/.hermes/config.yaml
-sed -i 's/^  name: .*/  name: <model-name>/' ~/.hermes/config.yaml
+# Note: Use '#' delimiter in sed because model names contain '/'
+sed -i "s#^  provider: .*#  provider: <provider-name>#" ~/.hermes/config.yaml
+sed -i "s#^  default: .*#  default: <model-name>#" ~/.hermes/config.yaml
+sed -i "s#^  name: .*#  name: <model-name>#" ~/.hermes/config.yaml
 ```
 
 Verify the changes:
@@ -517,13 +518,13 @@ To remove a provider:
 - **The `fallback_providers:` section in config.yaml is NOT Hermes's built-in fallback system.** The gateway ignores it. Real fallback is configured via `hermes fallback add` (interactive TTY command). The config.yaml section is a custom configuration that Hermes doesn't process natively.
 - **`model.api_key` and `model.base_url` in config.yaml are unnecessary** when using a provider registered via `hermes auth add`. Setting them manually can conflict with the provider's built-in credential resolution. Only set them for custom providers not in the auth system.
 - **`hermes auth add` assigns default base URLs** — When registering Xiaomi (or other providers with non-standard endpoints), verify the stored base URL in `~/.hermes/auth.json` matches the actual API endpoint. Edit the file directly if it doesn't. For example, Xiaomi's `token-plan-sgp` region uses `https://token-plan-sgp.xiaomimimo.com/v1`, not the default `https://api.xiaomimimo.com/v1`.
-- **Gateway restart is mandatory after config changes.** Use `systemctl --user restart hermes-gateway.service` — not `pkill -f` which leaves orphaned processes.
+- **Gateway restart is mandatory after config changes.** Use `systemctl --user restart hermes-gateway.service` — not `pkill -f` which leaves orphaned processes. Guard against restart storms: if rotating rapidly through multiple 429-exhausted models within seconds, batch the rotation update before restarting the gateway to avoid hitting systemd's `start-limit-hit` rate limits.
 - **OpenRouter free models change.** If a specific free model 404s, substitute `meta-llama/llama-3.3-70b-instruct:free` as the fallback model name for OpenRouter, then rotate if that also fails.
 - **Never expose API keys in logs or terminal output.**
 - **Groq's free tier resets every day but enforces per-minute limits.** A 429 on Groq may be a per-minute rate limit, not exhaustion. Wait 10 seconds and retry once before marking Groq as exhausted.
 - **Ollama must be running for the local tier to work.** If `http://127.0.0.1:11434/v1` is unreachable, the rotator will treat it as exhausted and move to the next provider. Ensure Ollama is started (`ollama serve`) before relying on this tier.
 - **Gateway does not auto-reload on model/config changes.** Changing `model.name`, `model.default`, or any config.yaml value does NOT take effect on a running gateway — you must restart it via `systemctl --user restart hermes-gateway.service`. See `references/phi3-removal.md` for the migration that revealed this.
-- **config.yaml is write-protected from Hermes tools.** The `patch` and `write_file` tools refuse to modify `/home/iliko/.hermes/config.yaml`. All edits must use `sed -i` via `terminal`. Sed range deletions and insertions work; `head`/`mv` combos may be blocked as destructive. Always verify with `sed -n` before removing lines.
+- **config.yaml is write-protected from Hermes tools.** The `patch` and `write_file` tools refuse to modify `~/.hermes/config.yaml`. All edits must use `sed -i` via `terminal`. Sed range deletions and insertions work; `head`/`mv` combos may be blocked as destructive. Always verify with `sed -n` before removing lines.
 - **Gateway/Service Configuration Mismatch**: If running Hermes as a system service (e.g. Telegram gateway via systemd), ensure it uses the same `HERMES_HOME` as your CLI sessions. Services running as different users (like root) will have isolated state and configuration. To verify consistency:
   1. Check the service config: `systemctl --user show hermes-gateway.service | grep HERMES_HOME`
   2. Compare with your user config: `hermes config show`

@@ -61,22 +61,24 @@ FMR is an advanced Hermes skill that provides intelligent model rotation with mu
    hermes skills load free-model-rotator
    ```
 
-3. **Configure credentials**:
+3. **Configure credentials safely**:
    ```bash
-   hermes auth add openrouter --api-key "sk-or-your-key"
-   hermes auth add gemini --api-key "$GEMINI_API_KEY"
-   hermes auth add deepseek --api-key "sk-your-deepseek-key"
+   read -rsp "OpenRouter API Key: " OR_KEY; echo
+   hermes auth add openrouter --api-key "$OR_KEY"
+   unset OR_KEY
+
+   read -rsp "Gemini API Key: " GEM_KEY; echo
+   hermes auth add gemini --api-key "$GEM_KEY"
+   unset GEM_KEY
+
+   read -rsp "DeepSeek API Key: " DS_KEY; echo
+   hermes auth add deepseek --api-key "$DS_KEY"
+   unset DS_KEY
    ```
 
-4. **Set up configuration**:
+4. **Verify installation & rotator status**:
    ```bash
-   # Create config.json with your preferred settings
-   cp config.json ~/.hermes/config.json
-   ```
-
-5. **Verify installation**:
-   ```bash
-   hermes skills run free-model-rotator /rotator status
+   python update_state.py status
    ```
 
 ## Usage
@@ -85,8 +87,11 @@ FMR is an advanced Hermes skill that provides intelligent model rotation with mu
 
 #### Status and Monitoring
 ```bash
-# View current rotation status
-hermes skills run free-model-rotator /rotator status
+# View current rotation status via CLI
+python update_state.py status
+
+# Or check state.json directly
+cat ~/.hermes/skills/free-model-rotator/state.json
 
 # Check provider configuration
 hermes config show
@@ -101,13 +106,13 @@ hermes fallback list
 #### Rotation Control
 ```bash
 # Reset rotation (clears exhausted keys)
-hermes skills run free-model-rotator /rotator reset
+python update_state.py reset
 
-# Skip current provider (mark as exhausted)
-hermes skills run free-model-rotator /rotator skip
+# Skip current provider (mark as exhausted and rotate)
+python update_state.py skip
 
 # Force switch to paid provider
-hermes skills run free-model-rotator /rotator paid
+python update_state.py paid
 ```
 
 #### Configuration
@@ -164,25 +169,12 @@ Create a custom `config.json` with your preferred settings:
 ```
 
 ### Model Discovery
-```bash
-# Run discovery to find available models
-hermes skills run free-model-rotator /discovery run
+Dynamic model availability is updated according to provider capabilities and status:
 
-# View discovered models
-hermes skills run free-model-rotator /models list
-```
-
-### Monitoring and Reporting
-```bash
-# View usage statistics
-hermes skills run free-model-rotator /usage report
-
-# Check quota status
-hermes skills run free-model-rotator /quota status
-
-# Generate performance report
-hermes skills run free-model-rotator /report generate
-```
+- **Automatic Scanning**: Periodically queries provider APIs for available models
+- **Quota-Aware**: Respects quota constraints while discovering
+- **Dynamic Updates**: Updates model availability in real-time
+- **Performance Tracking**: Tracks model performance metrics
 
 ## Configuration Options
 
@@ -244,58 +236,29 @@ The main configuration file for the FMR skill.
 
 ### Skill Commands
 
-#### /rotator status
-Display current rotation status:
-```bash
-hermes skills run free-model-rotator /rotator status
-```
+Within a Hermes Agent session, these commands can be sent as text instructions to the agent:
 
-#### /rotator reset
-Reset rotation state (clears exhausted keys):
-```bash
-hermes skills run free-model-rotator /rotator reset
-```
+#### `/rotator status`
+Instructs the agent to display the current rotation state and active model.
 
-#### /rotator skip
-Mark current provider as exhausted:
-```bash
-hermes skills run free-model-rotator /rotator skip
-```
+#### `/rotator reset`
+Instructs the agent to reset rotation state (clearing exhausted keys back to slot 0).
 
-#### /rotator paid
-Force switch to paid provider:
-```bash
-hermes skills run free-model-rotator /rotator paid
-```
+#### `/rotator skip`
+Instructs the agent to mark the current provider as exhausted and switch immediately.
 
-#### /discovery run
-Run provider discovery:
-```bash
-hermes skills run free-model-rotator /discovery run
-```
+#### `/rotator paid`
+Instructs the agent to switch immediately to the configured paid fallback.
 
-#### /models list
-List discovered models:
-```bash
-hermes skills run free-model-rotator /models list
-```
+### CLI Management (`update_state.py`)
 
-#### /usage report
-Generate usage report:
+Outside agent sessions, manage rotation state with:
 ```bash
-hermes skills run free-model-rotator /usage report
-```
-
-#### /quota status
-Check quota status:
-```bash
-hermes skills run free-model-rotator /quota status
-```
-
-#### /report generate
-Generate performance report:
-```bash
-hermes skills run free-model-rotator /report generate
+python update_state.py status
+python update_state.py rotate
+python update_state.py reset
+python update_state.py skip
+python update_state.py paid
 ```
 
 ## Troubleshooting
@@ -314,19 +277,24 @@ hermes skills run free-model-rotator /report generate
 **Solution**:
 - Manually remove retired keys: `hermes auth remove <provider> <key-id>`
 - Add replacement keys
-- Reset rotation if needed: `hermes skills run free-model-rotator /rotator reset`
+- Reset rotation if needed: `python update_state.py reset`
 
 #### 3. Quota Exceeded
 **Problem**: API quota limits reached.
 **Solution**:
-- Monitor quota usage: `hermes skills run free-model-rotator /usage report`
+- Monitor quota usage: `hermes auth list`
 - Add more keys for the same provider
 - Implement key cooldown periods
 
 #### `hermes auth list` Shows No Keys
 **Problem**: No credentials found.
 **Solution**:
-- Register keys: `hermes auth add <provider> --api-key "<key>"`
+- Register keys:
+  ```bash
+  read -rsp "API Key: " KEY; echo
+  hermes auth add <provider> --api-key "$KEY"
+  unset KEY
+  ```
 - Verify provider names: `hermes auth list`
 - Check for typos in provider names
 
@@ -336,7 +304,7 @@ hermes skills run free-model-rotator /report generate
 - Check failure counts: `hermes auth list`
 - Manually remove retired keys
 - Add new valid keys
-- Reset rotation: `hermes skills run free-model-rotator /rotator reset`
+- Reset rotation: `python update_state.py reset`
 
 ### Error Messages
 
@@ -427,9 +395,9 @@ This project is part of the Hermes Agent ecosystem. Use responsibly and respect 
 
 For issues with FMR:
 1. Check logs: `journalctl --user -u hermes-gateway.service`
-2. Run credential health sweep: `hermes skills run free-model-rotator /usage report`
-3. Verify provider credentials: `hermes auth list`
-4. Reset rotator if needed: `hermes skills run free-model-rotator /rotator reset`
+2. Verify provider credentials: `hermes auth list`
+3. Inspect current rotator state: `python update_state.py status`
+4. Reset rotator if needed: `python update_state.py reset`
 
 ---
 

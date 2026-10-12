@@ -30,7 +30,7 @@ The state file is located relative to your Hermes home directory. If you run mul
 
 Example:
 - `HERMES_HOME=/root/.hermes` → Uses `/root/.hermes/skills/free-model-rotator/state.json`
-- `HERMES_HOME=/home/iliko/.hermes` → Uses `/home/iliko/.hermes/skills/free-model-rotator/state.json`
+- `HERMES_HOME=/home/<user>/.hermes` → Uses `/home/<user>/.hermes/skills/free-model-rotator/state.json`
 
 ## Best Practices
 
@@ -38,17 +38,17 @@ Example:
 
 2. **Gateway Synchronization**: If you want your Telegram bot to use the same model rotation as your CLI, start the gateway with:
    ```bash
-   HERMES_HOME=/home/iliko/.hermes hermes gateway run &
+   HERMES_HOME=/home/<user>/.hermes hermes gateway run &
    ```
 
 3. **State Inspection**: Check current state with:
    ```bash
-   hermes skills run free-model-rotator /rotator status
+   python update_state.py status
    # Or directly:
    cat ~/.hermes/skills/free-model-rotator/state.json
    ```
 
 4. **Manual Reset**: To reset to the first provider:
    ```bash
-   hermes skills run free-model-rotator /rotator reset
+   python update_state.py reset
    ```
