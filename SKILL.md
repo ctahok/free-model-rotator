@@ -1,8 +1,8 @@
 ---
 name: free-model-rotator
 description: Rotate free LLM API providers; fall back to paid on exhaustion. 21 free tiers + 1 paid fallback.
-version: 3.2.0
-author: You
+version: 3.2.1
+author: CTAHOK
 platforms: [linux]
 ---
 

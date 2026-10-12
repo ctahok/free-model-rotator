@@ -92,5 +92,29 @@ class TestRotator(unittest.TestCase):
             self.assertEqual(mgr.state["current_index"], 0)
             self.assertEqual(mgr.state["exhausted"], [8])
 
+    def test_cli_subcommands(self):
+        """Verify CLI argument commands status, skip, paid work directly."""
+        import update_state
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_file = os.path.join(tmpdir, "state.json")
+            mgr = update_state.RotatorStateManager(state_path=state_file)
+            self.assertEqual(mgr.state["current_index"], 0)
+
+            # Skip
+            new_idx = mgr.skip()
+            self.assertEqual(new_idx, 1)
+            self.assertIn(0, mgr.state["exhausted"])
+
+            # Slot info lookup
+            slot = mgr.get_slot_info(new_idx)
+            self.assertIsNotNone(slot)
+            self.assertEqual(slot["provider"], "openrouter")
+            self.assertEqual(slot["model"], "dots-studio/dots-3-note-preview:free")
+
+            # Paid lookup
+            paid_slot = mgr.get_slot_info(99)
+            self.assertEqual(paid_slot["provider"], "deepseek (paid)")
+
 if __name__ == "__main__":
     unittest.main()

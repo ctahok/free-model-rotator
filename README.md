@@ -4,7 +4,14 @@
 
 FMR is an advanced Hermes skill that provides intelligent model rotation with multi-key support, automatic key retirement, and enhanced quota monitoring. This system goes beyond basic provider rotation to offer sophisticated credential management, performance optimization, and comprehensive discovery capabilities.
 
-**Version**: 3.2.0 (FMR branding and documentation update)
+**Version**: 3.2.1
+
+## What's new in 3.2.1
+- Fixed `sed` model replacement syntax delimiter to `#` to support slash-delimited model identifiers.
+- Re-architected `update_state.py` into a full-featured CLI manager adhering strictly to canonical `state.json` schema with atomic file operations and `0600` permissions.
+- Hardened security: sanitised credential setup instructions using non-echoing environment variables.
+- Scrubbed leaked private machine paths and identifiers from references and release notes.
+- Added comprehensive unit testing suite covering regex substitutions, schema operations, and rotation transitions.
 
 ## What's new in 3.2.0
 - Standardised the user-facing name as **FMR**.
@@ -350,7 +357,7 @@ Smart rotation strategies:
 ```json
 {
   "$schema": "https://hermes-agent.nousresearch.com/schemas/free-model-rotator.json",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "providers": {
     "provider_name": {
       "keys": ["key1", "key2"],
@@ -401,4 +408,4 @@ For issues with FMR:
 
 ---
 
-*Last updated: September 20, 2026 - v3.2.0 (FMR branding and documentation update)*
+*Last updated: October 12, 2026 - v3.2.1*

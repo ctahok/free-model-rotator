@@ -1,20 +1,19 @@
-# FMR v3.2.0 Release Status
+# FMR v3.2.1 Release Status
 
-Status: **PARKED — documentation release prepared, not shipped.**
+Status: **RELEASED**
 
-Prepared: 2026-09-22
+Prepared: 2026-10-12
 
-## Work completed
+## Work completed in v3.2.1
 
 - Standardised user-facing branding to **FMR**.
-- Updated the documented release version to **3.2.0** and corrected the API schema version from `3.1.0` to `3.2.0`.
-- Corrected the `free-model-rotcome` and `hermens skills` command examples.
-- Added `references/google-gemini-credentials.md` for multi-key Gemini registration, credential priority, state updates, and verification.
-- Removed a duplicated credential-recovery section from the skill documentation.
-- Aligned credential recovery guidance with explicit recovery/manual reset rather than automatic daily re-testing of `auth failed (401)` credentials.
-- Synchronised the repository skill with the active installed skill.
-- Ran `git diff --check` successfully.
-- Ran `python -m py_compile update_state.py` successfully.
+- Updated release version to **3.2.1**.
+- Fixed `sed` delimiter bug by adopting `#` delimiter to prevent failures with slash-containing model names.
+- Complete overhaul of `update_state.py` into a robust CLI utility supporting canonical `state.json` schema, atomic writes, and file permission safety.
+- Sanitised credentials setup documentation using non-echoing environment variables.
+- Scrubbed leaked private paths and cron IDs from documentation and references.
+- Added automated test suite `tests/test_rotator.py` verifying model replacements, schema validation, and state rotation.
+- Ran tests and compilation checks successfully.
 
 ## Changes prepared for commit
 
