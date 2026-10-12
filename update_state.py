@@ -12,7 +12,7 @@ Canonical Schema:
 - last_reset: ISO timestamp
 - session_start: ISO timestamp
 - gateway_primary: string (e.g. "openrouter")
-- gateway_model: string (e.g. "cohere/north-mini-code:free")
+- gateway_model: string (e.g. "openrouter/free")
 - fallback_providers: list of dicts [{"provider": str, "model": str}, ...]
 - last_updated: ISO timestamp
 - policy: string
@@ -28,7 +28,7 @@ from typing import Dict, List, Optional, Any
 
 # Ordered provider pool mapping matching SKILL.md
 FREE_PROVIDER_POOL = [
-    {"index": 0, "provider": "openrouter", "model": "cohere/north-mini-code:free"},
+    {"index": 0, "provider": "openrouter", "model": "openrouter/free"},
     {"index": 1, "provider": "openrouter", "model": "dots-studio/dots-3-note-preview:free"},
     {"index": 2, "provider": "openrouter", "model": "nvidia/nemotron-3-super-120b-a12b:free"},
     {"index": 3, "provider": "openrouter", "model": "inclusionai/ling-3.0-flash-vl:free"},
@@ -36,22 +36,21 @@ FREE_PROVIDER_POOL = [
     {"index": 5, "provider": "openrouter", "model": "inclusionai/ling-3.0-flash-sante:free"},
     {"index": 6, "provider": "openrouter", "model": "nex-agi/nex-n2.5-mini:free"},
     {"index": 7, "provider": "openrouter", "model": "liquid/lfm-2.5-2.6b:free"},
-    {"index": 8, "provider": "openrouter", "model": "openrouter/free"},
-    {"index": 9, "provider": "openrouter", "model": "poolside/laguna-xs-2.1:free"},
-    {"index": 10, "provider": "openrouter", "model": "poolside/laguna-s-2.1:free"},
-    {"index": 11, "provider": "openrouter", "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"},
-    {"index": 12, "provider": "openrouter", "model": "nex-agi/nex-n2.5-pro:free"},
-    {"index": 13, "provider": "openrouter", "model": "nvidia/nemotron-3.5-lightning:free"},
-    {"index": 14, "provider": "openrouter", "model": "nvidia/nemotron-3-ultra-550b-a55b:free"},
-    {"index": 15, "provider": "deepseek", "model": "deepseek-chat"},
-    {"index": 16, "provider": "zai", "model": "glm-5.2:free"},
-    {"index": 17, "provider": "gemini", "model": "gemini-1.5-flash"},
-    {"index": 18, "provider": "xiaomi", "model": "mimo-2.5-pro"},
-    {"index": 19, "provider": "copilot", "model": "gpt-4o-mini"},
+    {"index": 8, "provider": "openrouter", "model": "poolside/laguna-xs-2.1:free"},
+    {"index": 9, "provider": "openrouter", "model": "poolside/laguna-s-2.1:free"},
+    {"index": 10, "provider": "openrouter", "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"},
+    {"index": 11, "provider": "openrouter", "model": "nex-agi/nex-n2.5-pro:free"},
+    {"index": 12, "provider": "openrouter", "model": "nvidia/nemotron-3.5-lightning:free"},
+    {"index": 13, "provider": "openrouter", "model": "nvidia/nemotron-3-ultra-550b-a55b:free"},
+    {"index": 14, "provider": "deepseek", "model": "deepseek-chat"},
+    {"index": 15, "provider": "zai", "model": "glm-5.2:free"},
+    {"index": 16, "provider": "gemini", "model": "gemini-1.5-flash"},
+    {"index": 17, "provider": "xiaomi", "model": "mimo-2.5-pro"},
+    {"index": 18, "provider": "copilot", "model": "gpt-4o-mini"},
 ]
 
 PAID_FALLBACK_INDEX = 99
-TOTAL_FREE_SLOTS = 20  # indices 0 through 19
+TOTAL_FREE_SLOTS = 19  # indices 0 through 18
 
 
 def get_default_state_path() -> str:
@@ -71,11 +70,11 @@ class RotatorStateManager:
         now = datetime.now(timezone.utc).isoformat()
         return {
             "current_index": 0,
-            "exhausted": [8],  # index 8 (openrouter/free) is permanently exhausted by default
+            "exhausted": [],
             "last_reset": now,
             "session_start": now,
             "gateway_primary": "openrouter",
-            "gateway_model": "cohere/north-mini-code:free",
+            "gateway_model": "openrouter/free",
             "fallback_providers": [
                 {"provider": "openrouter", "model": "nex-agi/nex-n2.5-mini:free"},
                 {"provider": "openrouter", "model": "nvidia/nemotron-3-super-120b-a12b:free"},
@@ -88,7 +87,7 @@ class RotatorStateManager:
                 {"provider": "deepseek", "model": "deepseek-chat"},
             ],
             "last_updated": now,
-            "policy": "free-first with paid fallback (deepseek last); index 8 openrouter/free router marked exhausted",
+            "policy": "free-first with paid fallback (deepseek last); openrouter/free default",
         }
 
     def load_state(self) -> Dict[str, Any]:
@@ -181,8 +180,7 @@ class RotatorStateManager:
         """Reset rotator state: clear exhausted list and return to index 0."""
         now = datetime.now(timezone.utc).isoformat()
         self.state["current_index"] = 0
-        # Preserve permanent policy block on index 8 (openrouter/free)
-        self.state["exhausted"] = [8]
+        self.state["exhausted"] = []
         self.state["last_reset"] = now
         info = self.get_slot_info(0)
         if info:

@@ -4,7 +4,12 @@
 
 FMR is an advanced Hermes skill that provides intelligent model rotation with multi-key support, automatic key retirement, and enhanced quota monitoring. This system goes beyond basic provider rotation to offer sophisticated credential management, performance optimization, and comprehensive discovery capabilities.
 
-**Version**: 3.2.1
+**Version**: 3.2.2
+
+## What's new in 3.2.2
+- Changed primary default model to `openrouter/free` across rotator configuration, active state, and CLI management.
+- Removed permanent exhaustion block on `openrouter/free`, establishing it as the primary zero-cost entry point.
+- Re-indexed provider pool to reflect 19 free tiers + 1 paid fallback.
 
 ## What's new in 3.2.1
 - Fixed `sed` model replacement syntax delimiter to `#` to support slash-delimited model identifiers.
@@ -129,7 +134,7 @@ hermes config show
 
 # Update provider configuration
 hermes config set model.provider openrouter
-hermes config set model.default cohere/north-mini-code:free
+hermes config set model.default openrouter/free
 ```
 
 ### Advanced Usage
@@ -357,7 +362,7 @@ Smart rotation strategies:
 ```json
 {
   "$schema": "https://hermes-agent.nousresearch.com/schemas/free-model-rotator.json",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "providers": {
     "provider_name": {
       "keys": ["key1", "key2"],
@@ -408,4 +413,4 @@ For issues with FMR:
 
 ---
 
-*Last updated: October 12, 2026 - v3.2.1*
+*Last updated: October 12, 2026 - v3.2.2*

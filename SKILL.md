@@ -1,7 +1,7 @@
 ---
 name: free-model-rotator
-description: Rotate free LLM API providers; fall back to paid on exhaustion. 21 free tiers + 1 paid fallback.
-version: 3.2.1
+description: Rotate free LLM API providers; fall back to paid on exhaustion. 20 free tiers + 1 paid fallback.
+version: 3.2.2
 author: CTAHOK
 platforms: [linux]
 ---
@@ -130,7 +130,7 @@ When `auth failed (401)` is detected for a provider:
 
 | Index | Provider | Free | Model | Measured |
 |-------|----------|------|-------|----------|
-| 0        | OpenRouter      | ✅ yes             | cohere/north-mini-code:free                        | 0.31s TTFT / 194 t/s |
+| 0        | OpenRouter      | ✅ yes             | openrouter/free                                    | 3.0s median real, 780 logged calls |
 | 1        | OpenRouter      | ✅ yes             | dots-studio/dots-3-note-preview:free               | 0.71s TTFT / 65 t/s |
 | 2        | OpenRouter      | ✅ yes             | nvidia/nemotron-3-super-120b-a12b:free             | 1.02s TTFT / 46 t/s (best large model) |
 | 3        | OpenRouter      | ✅ yes             | inclusionai/ling-3.0-flash-vl:free                 | 0.91s TTFT / 157 t/s (multimodal) |
@@ -138,19 +138,18 @@ When `auth failed (401)` is detected for a provider:
 | 5        | OpenRouter      | ✅ yes             | inclusionai/ling-3.0-flash-sante:free              | 1.09s TTFT / 296 t/s |
 | 6        | OpenRouter      | ✅ yes             | nex-agi/nex-n2.5-mini:free                         | 0.94s TTFT |
 | 7        | OpenRouter      | ✅ yes             | liquid/lfm-2.5-2.6b:free                           | 0.85s TTFT / 425 t/s (2.6B — low capability) |
-| 8        | OpenRouter      | ✅ yes             | openrouter/free                                    | 3.0s median real, 780 logged calls |
-| 9        | OpenRouter      | ✅ yes             | poolside/laguna-xs-2.1:free                        | 0.23s but 50% 429 |
-| 10       | OpenRouter      | ✅ yes             | poolside/laguna-s-2.1:free                         | 0.62s but 50% 429 |
-| 11       | OpenRouter      | ✅ yes             | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free | 0.50s but 50% 502 |
-| 12       | OpenRouter      | ✅ yes             | nex-agi/nex-n2.5-pro:free                          | 20-50s TTFT |
-| 13       | OpenRouter      | ✅ yes             | nvidia/nemotron-3.5-lightning:free                 | 30-97s TTFT / 3.7 t/s |
-| 14       | OpenRouter      | ✅ yes             | nvidia/nemotron-3-ultra-550b-a55b:free             | 55-91s TTFT / 67 t/s |
-| 15       | DeepSeek        | ✅ yes             | deepseek-chat / deepseek-flash                     | 2.60s median real, 115 t/s |
-| 16       | zai             | ✅ yes             | glm-5.2:free                                       | typically fast |
-| 17       | Gemini          | ✅ yes             | gemini-1.5-flash                                   | typically fast (both keys 429-exhausted as of 2026-09-13) |
-| 18       | Xiaomi          | ✅ yes             | mimo-2.5-pro                                       | paid fallback |
-| 19       | Copilot         | ✅ yes             | gpt-4o-mini                                        | if available |
-| 20       | PAID            | via custom config  | (your paid model)                                  | unlimited (billed) |
+| 8        | OpenRouter      | ✅ yes             | poolside/laguna-xs-2.1:free                        | 0.23s but 50% 429 |
+| 9        | OpenRouter      | ✅ yes             | poolside/laguna-s-2.1:free                         | 0.62s but 50% 429 |
+| 10       | OpenRouter      | ✅ yes             | nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free | 0.50s but 50% 502 |
+| 11       | OpenRouter      | ✅ yes             | nex-agi/nex-n2.5-pro:free                          | 20-50s TTFT |
+| 12       | OpenRouter      | ✅ yes             | nvidia/nemotron-3.5-lightning:free                 | 30-97s TTFT / 3.7 t/s |
+| 13       | OpenRouter      | ✅ yes             | nvidia/nemotron-3-ultra-550b-a55b:free             | 55-91s TTFT / 67 t/s |
+| 14       | DeepSeek        | ✅ yes             | deepseek-chat / deepseek-flash                     | 2.60s median real, 115 t/s |
+| 15       | zai             | ✅ yes             | glm-5.2:free                                       | typically fast |
+| 16       | Gemini          | ✅ yes             | gemini-1.5-flash                                   | typically fast (both keys 429-exhausted as of 2026-09-13) |
+| 17       | Xiaomi          | ✅ yes             | mimo-2.5-pro                                       | paid fallback |
+| 18       | Copilot         | ✅ yes             | gpt-4o-mini                                        | if available |
+| 19       | PAID            | via custom config  | (your paid model)                                  | unlimited (billed) |
 
 **Never rotate to** (present on the free tier but unusable):
 `thinkingmachines/inkling:free`, `thinkingmachines/inkling-small:free` (403),
@@ -218,16 +217,15 @@ If the file does not exist, initialise it:
 ```
 
 The `current_index` maps to the working provider
-(0 = OpenRouter/cohere/north-mini-code, 1 = OpenRouter/dots-studio/dots-3-note-preview,
+(0 = OpenRouter/openrouter/free, 1 = OpenRouter/dots-studio/dots-3-note-preview,
 2 = OpenRouter/nvidia/nemotron-3-super, 3 = OpenRouter/inclusionai/ling-3.0-flash-vl,
 4 = OpenRouter/inclusionai/ling-3.0-flash-fin, 5 = OpenRouter/inclusionai/ling-3.0-flash-sante,
 6 = OpenRouter/nex-agi/nex-n2.5-mini, 7 = OpenRouter/liquid/lfm-2.5-2.6b,
-8 = OpenRouter/openrouter-free-router, 9 = OpenRouter/poolside/laguna-xs-2.1,
-10 = OpenRouter/poolside/laguna-s-2.1, 11 = OpenRouter/nvidia/nemotron-3-nano-omni,
-12 = OpenRouter/nex-agi/nex-n2.5-pro, 13 = OpenRouter/nvidia/nemotron-3.5-lightning,
-14 = OpenRouter/nvidia/nemotron-3-ultra-550b-a55b, 15 = DeepSeek, 16 = zai/GLM,
-17 = Gemini, 18 = Xiaomi/Mimo, 19 = Copilot,
-20 = PAID fallback). Any provider NOT shown in `hermes auth list` must be skipped regardless of its index.
+8 = OpenRouter/poolside/laguna-xs-2.1, 9 = OpenRouter/poolside/laguna-s-2.1,
+10 = OpenRouter/nvidia/nemotron-3-nano-omni, 11 = OpenRouter/nex-agi/nex-n2.5-pro,
+12 = OpenRouter/nvidia/nemotron-3.5-lightning, 13 = OpenRouter/nvidia/nemotron-3-ultra-550b-a55b,
+14 = DeepSeek, 15 = zai/GLM, 16 = Gemini, 17 = Xiaomi/Mimo, 18 = Copilot,
+19 = PAID fallback). Any provider NOT shown in `hermes auth list` must be skipped regardless of its index.
 
 **Important**: The state file path depends on your `HERMES_HOME` environment variable.
 If you run multiple Hermes instances (e.g. CLI vs system gateway), ensure they

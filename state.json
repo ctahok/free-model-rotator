@@ -1,12 +1,10 @@
 {
   "current_index": 0,
-  "exhausted": [
-    8
-  ],
-  "last_reset": "2026-09-14T11:55:58.708723+00:00",
-  "session_start": "2026-09-14T11:55:58.708723+00:00",
+  "exhausted": [],
+  "last_reset": "2026-10-12T19:20:00.000000+00:00",
+  "session_start": "2026-10-12T19:20:00.000000+00:00",
   "gateway_primary": "openrouter",
-  "gateway_model": "cohere/north-mini-code:free",
+  "gateway_model": "openrouter/free",
   "fallback_providers": [
     {
       "provider": "openrouter",
@@ -45,6 +43,6 @@
       "model": "deepseek-chat"
     }
   ],
-  "last_updated": "2026-09-14T11:55:58.708723+00:00",
-  "policy": "free-first with paid fallback (deepseek last); index 8 openrouter/free router marked exhausted (can misroute to nvidia/nemotron-3.5-content-safety classifier)"
+  "last_updated": "2026-10-12T19:20:00.000000+00:00",
+  "policy": "free-first with paid fallback (deepseek last); openrouter/free default model"
 }
